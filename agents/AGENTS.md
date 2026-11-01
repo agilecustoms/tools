@@ -3,6 +3,10 @@
 Shared rules for all agilecustoms repos. Each repo may have its own `AGENTS.md` with project specifics.
 Read both, the repo one wins on conflict.
 
+Claude Code SessionStart hook (registered by `tools/install.sh`) runs `tools/scripts/check-for-update.sh`.
+If its output says tools are out of date, tell the user that tools (incl. these rules) are out of date and offer to update
+with the command it prints (`git pull` and `install.sh`)
+
 ## Repos
 
 There are few types of repos:
