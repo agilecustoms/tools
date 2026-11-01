@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0](https://github.com/agilecustoms/tools/compare/v1.0.2...v1.1.0) (2026-11-01)
+
+### Features
+
+* install.sh links shared AGENTS.md and registers Claude Code SessionStart hook to check for tools update ([0fb0e71](https://github.com/agilecustoms/tools/commit/0fb0e710317e7353515f45ef2a2fc8e71d333e6a))
+
+
 ## [1.0.2](https://github.com/agilecustoms/tools/compare/v1.0.1...v1.0.2) (2026-11-01)
 
 ### Dependencies update
