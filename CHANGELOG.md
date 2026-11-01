@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.0.1](https://github.com/agilecustoms/tools/compare/v1.0.0...v1.0.1) (2026-11-01)
+
+### Documentation
+
+* AGENTS.md Makefile naming (run-, hot-, debug-, x-), app1-3 called from CI, GitHub workflows conventions ([6146fb1](https://github.com/agilecustoms/tools/commit/6146fb1c585c7257a3722dcf330761dddba6e7be))
+
+### Miscellaneous
+
+* rename Verify job to Validate [skip ci] ([b198965](https://github.com/agilecustoms/tools/commit/b198965d2400adec6976670b1d2501f33dcd3213))
+
+
+# Changelog
+
 ## 1.0.0 (2026-11-01)
 
 ### Documentation
