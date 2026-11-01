@@ -41,7 +41,7 @@ Targets follow one naming scheme across repos, the number is the stage:
 Before finishing a change run the repo's lint and test targets (`app1-*`, `app2-*`).
 Don't run anything that deploys, invokes or deletes in AWS, even if `ENV` looks like a non-prod default: ask the user.
 
-Private dependencies (Maven, npm) come from AWS CodeArtifact. Locally the token comes from `~/agilecustoms/ac-tools.sh`
+Private dependencies (Maven, npm) come from AWS CodeArtifact. Locally the token comes from `~/agilecustoms/github/tools/build/tools.sh`
 (`ac_build_token`), which needs an AWS SSO session. If you can't get it, say so - don't skip the step silently.
 
 ## Git / Release
