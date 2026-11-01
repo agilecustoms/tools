@@ -24,22 +24,38 @@ There are few types of repos:
 
 ## Makefile
 
-Targets follow one naming scheme across repos, the number is the stage:
+Targets follow one naming scheme across repos. In `appN-*` the number is the order you need them in
 
-| Target prefix         | What it does                                                         | Safe to run       |
-|-----------------------|----------------------------------------------------------------------|-------------------|
-| `_aws-login`          | `aws sso login` (interactive)                                        | no - ask the user |
-| `app0-*`              | install / update dependencies                                        | yes               |
-| `app1-*`              | lint, format, type check                                             | yes               |
-| `app2-*`              | tests (unit, integration)                                            | yes               |
-| `app3-*`              | build / package                                                      | yes               |
-| `app4-*`              | hit real AWS: hot redeploy, invoke, delete versions, run against env | **no, never**     |
-| `terraform*-*`        | `get` / `init` / `validate` / `fmt`                                  | yes               |
-| `terraform*-*`        | `plan` / `apply` / `destroy` / `unlock`                              | **no, never**     |
-| `x-install-git-hooks` | copies `.github/pre-commit` into `.git/hooks`                        | yes               |
+| Target        | What it does                                                                           |
+|---------------|----------------------------------------------------------------------------------------|
+| `_aws-login`  | `aws sso login` (interactive)                                                          |
+| `app0-*`      | install / update dependencies; the only stage that fetches the CodeArtifact token      |
+| `app1-*`      | lint, format, type check                                                               |
+| `app2-*`      | tests (unit, integration)                                                              |
+| `app3-*`      | build, package, generate OpenAPI spec                                                  |
+| `run-*`       | run the app locally (`run-local`, `run-local-dev`) or against a real env (`run-aws-*`) |
+| `hot-*`       | hit real AWS: hot redeploy, invoke deployed Lambda, need confirmation to run           |
+| `x-*`         | various helpers, only human can run                                                    |
+| `terraform-*` | need confirmation when run deploy or destroy                                           |
+| `debug-*`     | debug some complex workflows, only human can run                                       |
+
+- `app1-*` - `app3-*` represent standard stages of CI pipeline: lint, test, build/package. Numbers represent the order.
+  Intended to be the same for local and CI. Few exceptions say why: `app1-lint-fix: # not called by CI (local only...)`
+- `*-gitops` and `infrastructure-core` have their own schemes (`env0-status`, `gh-1-plan`...): don't run them, ask the user
 
 Before finishing a change run the repo's lint and test targets (`app1-*`, `app2-*`).
 Don't run anything that deploys, invokes or deletes in AWS, even if `ENV` looks like a non-prod default: ask the user.
+
+## GitHub workflows
+
+- `build.yml` (name `Build`) runs on push in any branch, its `Release` job runs only on `main`. When release reuses build
+  artifacts: `build.yml` (not on `main`, `workflow_call`) + `release.yml` calling it, optionally `release-dev.yml` (manual)
+- Job names: `Validate` - lint / static checks, incl. terraform validation in infra-only repos; `Validate-infra` - terraform
+  validation in repos with both code and infrastructure (microservices); `Build`; `Test`; `Release`
+- Jobs that must pass before PR merge are declared in `infrastructure-core/github/repo-*.tf` (`required_status_checks`,
+  value `local.GHA_JOB` / `var.gha_job` - GitHub Actions app id). Renaming such a job means changing it there too
+- Matrix or several test jobs are aggregated by one `Test` job (`if: always()`, fails unless all `needs` succeeded) that is
+  the required check: matrix checks are named per version, and a skipped required check counts as passed
 
 Private dependencies (Maven, npm) come from AWS CodeArtifact. Locally the token comes from `~/agilecustoms/github/tools/build/tools.sh`
 (`ac_build_token`), which needs an AWS SSO session. If you can't get it, say so - don't skip the step silently.
