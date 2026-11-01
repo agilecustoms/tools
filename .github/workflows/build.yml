@@ -4,7 +4,7 @@ on:
   push:
 
 jobs:
-  Verify:
+  Validate:
     runs-on: ubuntu-slim
     permissions:
       contents: read # required for actions/checkout
@@ -20,7 +20,7 @@ jobs:
 
   Release:
     if: github.ref == 'refs/heads/main'
-    needs: Verify
+    needs: Validate
     runs-on: ubuntu-slim
     environment: release
     steps:
