@@ -1,3 +1,4 @@
+# shellcheck shell=dash # sourced by /bin/sh: dash on Linux, bash on macOS. Both support 'local'
 # Usage (also from Makefile recipes, run by /bin/sh): . "$HOME/agilecustoms/github/tools/build/tools.sh" && ac_build_token
 # Exports ARTIFACT_STORE_TOKEN for CodeArtifact. Optional arg: AWS profile, default ac-dist-dev (read), ac-dist-builder to publish
 ac_build_token() {

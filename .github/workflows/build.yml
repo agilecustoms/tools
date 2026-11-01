@@ -1,0 +1,33 @@
+name: Build
+
+on:
+  push:
+
+jobs:
+  Verify:
+    runs-on: ubuntu-slim
+    permissions:
+      contents: read # required for actions/checkout
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      # shellcheck is preinstalled in GH Ubuntu image
+      - name: Shellcheck
+        run: shellcheck build/*.sh
+
+  Release:
+    if: github.ref == 'refs/heads/main'
+    needs: Verify
+    runs-on: ubuntu-slim
+    environment: release
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Release
+        uses: agilecustoms/gha-release@main
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
