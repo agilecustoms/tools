@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.0.2](https://github.com/agilecustoms/tools/compare/v1.0.1...v1.0.2) (2026-11-01)
+
+### Dependencies update
+
+* Makefile with app1-lint (shellcheck), called by CI ([fb2e46b](https://github.com/agilecustoms/tools/commit/fb2e46bd18feffbc1a8be47d0bb21e8aba9ca229))
+
+### Documentation
+
+* AGENTS.md GitHub workflows section (.yml files, Input-Validation) ([c0b577a](https://github.com/agilecustoms/tools/commit/c0b577a907572a0108e19479821a0f58aba82cae))
+
+
 ## [1.0.1](https://github.com/agilecustoms/tools/compare/v1.0.0...v1.0.1) (2026-11-01)
 
 ### Documentation
