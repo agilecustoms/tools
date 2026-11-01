@@ -48,14 +48,16 @@ Don't run anything that deploys, invokes or deletes in AWS, even if `ENV` looks 
 
 ## GitHub workflows
 
-- `build.yml` (name `Build`) runs on push in any branch, its `Release` job runs only on `main`. When release reuses build
-  artifacts: `build.yml` (not on `main`, `workflow_call`) + `release.yml` calling it, optionally `release-dev.yml` (manual)
-- Job names: `Validate` - lint / static checks, incl. terraform validation in infra-only repos; `Validate-infra` - terraform
-  validation in repos with both code and infrastructure (microservices); `Build`; `Test`; `Release`
-- Jobs that must pass before PR merge are declared in `infrastructure-core/github/repo-*.tf` (`required_status_checks`,
-  value `local.GHA_JOB` / `var.gha_job` - GitHub Actions app id). Renaming such a job means changing it there too
-- Matrix or several test jobs are aggregated by one `Test` job (`if: always()`, fails unless all `needs` succeeded) that is
-  the required check: matrix checks are named per version, and a skipped required check counts as passed
+- `build.yml` (name `Build`) runs on push in any branch, its `Release` job runs only on `main`
+- repos with multiple release workflows have dedicated workflow files `release.yml`, `release-dev.yml` which call `build.yml` internally
+- Jobs that must pass before PR merge (`Build`, `Test`, etc) are declared in `infrastructure-core/github/repo-*.tf`
+- Repos that have multiple test jobs (`Input-Validation`, `E2E`) declare one final job `Test` that is used as quality gate
+- Job names:
+  - `Build` - standard CI flow: install deps, lint, unit tests, package
+  - `Validate` - lint / static checks for infra-only repos
+  - `Validate-infra` - terraform validation in repos with both code and infrastructure (microservices)
+  - `Test` - integration tests
+  - `Release` - release job, runs mostly on `main` branch
 
 Private dependencies (Maven, npm) come from AWS CodeArtifact. Locally the token comes from `~/agilecustoms/github/tools/build/tools.sh`
 (`ac_build_token`), which needs an AWS SSO session. If you can't get it, say so - don't skip the step silently.
