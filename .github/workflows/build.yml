@@ -16,7 +16,7 @@ jobs:
 
       # shellcheck is preinstalled in GH Ubuntu image
       - name: Shellcheck
-        run: shellcheck build/*.sh
+        run: make app1-lint
 
   Release:
     if: github.ref == 'refs/heads/main'
