@@ -79,6 +79,17 @@ Private dependencies (Maven, npm) come from AWS CodeArtifact. Locally the token 
 - by default, you make all changes in working copy of `main` branch, `git add` any new files, but do not commit them.
   Human review changes and gives commands `commit` and `push`
 
+## Logging (Lambdas)
+
+Logs are JSON (`level`, `service`, `env`, `requestId`, `message`, ...); values go in fields, not only in message text.
+Every Lambda that handles events or requests follows this contract, so one query covers all of them:
+- One closing record per invocation, always (also on exception: `finally` / every exit path), INFO level,
+  message `event handled <outcome>`. Fields: `outcome` (kebab-case) and `durationMs` (whole invocation), service-specific
+  extras are fine (`status`, `stage`, `resources`...). The error itself is logged separately (ERROR with stack trace)
+- `outcome` values are service-specific, except `failed`: system error (SQS retries the message, HTTP 5xx), same everywhere
+- SQS-triggered: if receive count > 1, one record `retry, attempt N` with numeric `attempt` at the start
+- Exempt: authorizers (they log denials, API Gateway access logs cover requests)
+
 ## Code style
 
 Source of truth: `~/git/coding-rules`. The rules most often relevant:
