@@ -73,8 +73,9 @@ Private dependencies (Maven, npm) come from AWS CodeArtifact. Locally the token 
   direct push to `main` or merge to `main` releases automatically. CI makes the `Release version ... [skip ci]` commits
   and updates `CHANGELOG.md` and versions - never do that by hand.
 - Git hooks live in `.githooks/` (where present), `.githooks/pre-commit` runs the repo's linters; don't bypass it with `--no-verify`.
-  When you first work with a repo that has `.githooks/`, check `git config core.hooksPath`: if it is not `.githooks`, run
-  `git config --local core.hooksPath .githooks`
+  Git uses them via `core.hooksPath = .githooks`, set once per machine for all repos under `~/agilecustoms/github/`
+  (`includeIf` in `~/.gitconfig`, see Confluence "Git/GitHub"). If `git config core.hooksPath` in a repo is not `.githooks`,
+  tell the user, don't set it per repo
 - by default, you make all changes in working copy of `main` branch, `git add` any new files, but do not commit them.
   Human review changes and gives commands `commit` and `push`
 
