@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.1.1](https://github.com/agilecustoms/tools/compare/v1.1.0...v1.1.1) (2026-11-11)
+
+### Documentation
+
+* core.hooksPath is set once per machine (includeIf), not per repo [skip ci] ([8924316](https://github.com/agilecustoms/tools/commit/892431621a056a46c6c39fcba4aebba598aedcad))
+* git hooks live in .githooks, enabled by core.hooksPath [skip ci] ([6f0e459](https://github.com/agilecustoms/tools/commit/6f0e459064dee86bbff3d5a51ab64d1562933d9b))
+
+### Miscellaneous
+
+* logging contract for Lambdas: closing record 'event handled <outcome>' with outcome and durationMs ([070c4d5](https://github.com/agilecustoms/tools/commit/070c4d5c26a00e4452cbe59a737b5213b12b8d0d))
+
+
 ## [1.1.0](https://github.com/agilecustoms/tools/compare/v1.0.2...v1.1.0) (2026-11-01)
 
 ### Features
