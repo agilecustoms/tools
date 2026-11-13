@@ -105,22 +105,29 @@ File names per language:
 - Java `LambdaHandler`, `Application` (local), `Invoke`
 
 Local run has two equal paths, one setup (profiles, env vars, dependencies) shared by both:
-- IDE (developer: debugger from the first line, env vars, hot reload): run configurations "local", "localaws" in `.run/`
-  (JetBrains "store as project file", in git; `.idea/` stays ignored). "local" runs `make run-local-deps` before launch
+- IDE (developer: debugger from the first line, env vars, hot reload): run configurations "local-deps", "local", "localaws"
+  in `.run/` (JetBrains "store as project file", in git; `.idea/` stays ignored). Config names w/o spaces
 - CLI (AI agent, FE developer who just needs BE, newcomer): `make run-local`, `make run-localaws`
   An IDE configuration and its make target must set the same profiles and env vars
 
+Local dependencies are started explicitly, then the app, as two processes (simple, nothing runs in background unseen):
+- dependencies run in foreground (not `-d`): stop them, close the IDE or terminal - and they stop; app restarts don't
+  affect them. No "stop" target: everyone forgets to call it
+- the app checks them at start (`local` runtime) and stops at once with a hint if they are not running or not ready:
+  many apps run DB migrations or load params at start, and a late connection error is confusing
+
 Make targets:
-- `run-local-deps` - starts local dependencies (`docker compose up -d --wait`), returns when they are ready
-- `run-local` - `run-local-deps` + local server in `local` runtime
+- `run-local-deps` - local dependencies in foreground: `trap 'docker compose down' EXIT HUP INT TERM; docker compose up`
+  (trap: plain `docker compose up` leaves containers running when its terminal is closed)
+- `run-local` - local server in `local` runtime
 - `run-local-watch` - same with reload on code change (where the stack supports it)
 - `run-localaws` - local server in `localaws` runtime
 - `run-invoke EVENT=events/<name>.json` - invoke in `local` runtime, sample events are in `events/`
 - `app3-generate-openapi` - spec in `dist/`
 - extra variants are allowed, they keep the runtime name in target name (ex: tt-web `run-local-mock` - UI w/o backend)
 
-Local dependencies are in `docker-compose.yml` in repo root, a healthcheck tells when they are ready (ex: LocalStack init
-scripts are done), so `--wait` returns when the app can start. README sections, same names in all services:
+Local dependencies are in `docker-compose.yml` in repo root, w/o restart policy (no surprise restart with Docker), a healthcheck
+tells when they are ready (ex: LocalStack init scripts are done), the app checks the same readiness at start. README sections, same names in all services:
 "Profiles", "Run locally (local)", "Run locally with AWS resources (localaws)", "Integration tests"
 
 ## Logging (Lambdas)
