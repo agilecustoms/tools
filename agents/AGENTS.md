@@ -97,28 +97,28 @@ Services (Lambdas, web app) share one config concept, whatever the language: pro
 
 Entry points are siblings over the same dependency injection container (application logic is defined once):
 Lambda handler (`aws`), local server (`local`, `localaws`), invoke (`local`), OpenAPI generator, integration tests.
-Invoke runs the Lambda handler once with an event from a file (SQS message, API Gateway request), prints JSON logs
-and the response, exits with exit code: debug a feature or replay an event w/o deploying. It refuses non-local config.
+Invoke runs the Lambda handler once with an event from a file (SQS message, API Gateway request),
+prints JSON logs and the response, exits with exit code: debug a feature or replay an event w/o deploying.
+It refuses non-local config.
 File names per language:
 - Python `lambda_handler.py`, `local/run_local.py`, `local/invoke.py`, `openapi/`
 - TypeScript `lambda_handler.ts`, `run_local.ts`, `invoke.ts`, `openapi.ts`
 - Java `LambdaHandler`, `Application` (local), `Invoke`
 
 Local run has two equal paths, one setup (profiles, env vars, dependencies) shared by both:
-- IDE (developer: debugger from the first line, env vars, hot reload): run configurations "local-deps", "local", "localaws"
-  in `.run/` (JetBrains "store as project file", in git; `.idea/` stays ignored). Config names w/o spaces
-- CLI (AI agent, FE developer who just needs BE, newcomer): `make run-local`, `make run-localaws`
+- IDE (developer: debugger from the first line, env vars, hot reload):
+  run configurations "local-deps", "local", "localaws" in `.run/` (JetBrains "store as project file", in git; `.idea/` stays ignored).
+  Config names w/o spaces
+- CLI (AI agent, FE developer who just needs BE, newcomer): `make run-local`, `make run-localaws`.
   An IDE configuration and its make target must set the same profiles and env vars
 
-Local dependencies are started explicitly, then the app, as two processes (simple, nothing runs in background unseen):
-- dependencies run in foreground (not `-d`): stop them, close the IDE or terminal - and they stop; app restarts don't
-  affect them. No "stop" target: everyone forgets to call it
-- the app checks them at start (`local` runtime) and stops at once with a hint if they are not running or not ready:
-  many apps run DB migrations or load params at start, and a late connection error is confusing
+Local dependencies are started explicitly, then the app, as two processes:
+- dependencies stop with their process (stop, closing the IDE or terminal); the app restarts don't affect them
+- the app checks them at start (`local` runtime) and stops at once with a hint if they are not running or not ready
 
 Make targets:
 - `run-local-deps` - local dependencies in foreground: `trap 'docker compose down' EXIT HUP INT TERM; docker compose up`
-  (trap: plain `docker compose up` leaves containers running when its terminal is closed)
+  (trap also stops them when the terminal is closed)
 - `run-local` - local server in `local` runtime
 - `run-local-watch` - same with reload on code change (where the stack supports it)
 - `run-localaws` - local server in `localaws` runtime
@@ -126,8 +126,12 @@ Make targets:
 - `app3-generate-openapi` - spec in `dist/`
 - extra variants are allowed, they keep the runtime name in target name (ex: tt-web `run-local-mock` - UI w/o backend)
 
-Local dependencies are in `docker-compose.yml` in repo root, w/o restart policy (no surprise restart with Docker), a healthcheck
-tells when they are ready (ex: LocalStack init scripts are done), the app checks the same readiness at start. README sections, same names in all services:
+Local dependencies are in `docker-compose.yml` in repo root:
+- no restart policy, no `container_name` (compose names containers by project, ex: `env-api-localstack-1`)
+- a healthcheck tells when they are ready (ex: LocalStack init scripts are done),
+  the app checks the same readiness at start, it takes the endpoint from its local config
+
+README sections, same names in all services:
 "Profiles", "Run locally (local)", "Run locally with AWS resources (localaws)", "Integration tests"
 
 ## Logging (Lambdas)
