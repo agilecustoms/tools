@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.1.4](https://github.com/agilecustoms/tools/compare/v1.1.3...v1.1.4) (2026-11-13)
+
+### Documentation
+
+* local dependencies in compose w/o container_name, readiness check reads endpoint from config, line breaks ([4ce7e64](https://github.com/agilecustoms/tools/commit/4ce7e64ba6b8239e43a0a8409e15079044eb6e38))
+* local dependencies started explicitly in foreground, app checks them at start, IDE configs local-deps/local/localaws ([101d314](https://github.com/agilecustoms/tools/commit/101d3149902cd737838b108d8ebfbbfd340e862f))
+
+
 ## [1.1.3](https://github.com/agilecustoms/tools/compare/v1.1.2...v1.1.3) (2026-11-13)
 
 ### Documentation
