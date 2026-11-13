@@ -37,7 +37,7 @@ Targets follow one naming scheme across repos. In `appN-*` the number is the ord
 | `app1-*`      | lint, format, type check                                                               |
 | `app2-*`      | tests (unit, integration)                                                              |
 | `app3-*`      | build, package, generate OpenAPI spec                                                  |
-| `run-*`       | run the app locally (`run-local`, `run-local-dev`) or against a real env (`run-aws-*`) |
+| `run-*`       | run the app locally: `run-local`, `run-localaws`, `run-invoke` (see Runtimes below)    |
 | `hot-*`       | hit real AWS: hot redeploy, invoke deployed Lambda, need confirmation to run           |
 | `x-*`         | various helpers, only human can run                                                    |
 | `terraform-*` | need confirmation when run deploy or destroy                                           |
@@ -78,6 +78,40 @@ Private dependencies (Maven, npm) come from AWS CodeArtifact. Locally the token 
   tell the user, don't set it per repo
 - by default, you make all changes in working copy of `main` branch, `git add` any new files, but do not commit them.
   Human review changes and gives commands `commit` and `push`
+
+## Runtimes and entry points
+
+Services (Lambdas, web app) share one config concept, whatever the language: profiles in this order (later wins)
+1. default – always loaded
+2. environment type - `dev`, `test`, `prod` (Terraform `var.env_type`)
+3. runtime – see the table
+4. runtime-environment - `{runtime}-{environment}`, ex: `aws-prod`, for overrides
+
+| runtime    | what runs where                                                                            | profiles                    |
+|------------|--------------------------------------------------------------------------------------------|-----------------------------|
+| `aws`      | app in Lambda                                                                              | `{env},aws,aws-{env}`       |
+| `local`    | app on local machine, all dependencies local (LocalStack, DB in docker), never touches AWS | `dev,local,local-dev`       |
+| `localaws` | app on local machine, real AWS resources of an env                                         | `dev,localaws,localaws-dev` |
+| `openapi`  | one-time run to generate the OpenAPI spec                                                  | `openapi`                   |
+| `it`       | integration tests                                                                          | `it`                        |
+
+Entry points are siblings over the same dependency injection container (application logic is defined once):
+Lambda handler (`aws`), local server (`local`, `localaws`), invoke (`local`), OpenAPI generator, integration tests.
+Invoke runs the Lambda handler once with an event from a file (SQS message, API Gateway request), prints JSON logs
+and the response, exits with exit code: debug a feature or replay an event w/o deploying. It refuses non-local config.
+File names per language: Python `lambda_handler.py`, `local/local_run.py`, `local/invoke.py`, `openapi/`;
+TypeScript `lambda_handler.ts`, `local_run.ts`, `invoke.ts`, `openapi.ts`; Java `LambdaHandler`, `Application` (local), `Invoke`
+
+Make targets:
+- `run-local` - local server in `local` runtime, starts its local dependencies itself (`docker compose up -d --wait`)
+- `run-local-watch` - same with reload on code change
+- `run-localaws` - local server in `localaws` runtime
+- `run-invoke EVENT=events/<name>.json` - invoke in `local` runtime, sample events are in `events/`
+- `app3-generate-openapi` - spec in `dist/`
+- extra variants are allowed, they keep the runtime name in target name (ex: tt-web `run-local-mock` - UI w/o backend)
+
+Local dependencies are in `docker-compose.yml` in repo root. README sections, same names in all services:
+"Profiles", "Run locally (local)", "Run locally with AWS resources (localaws)", "Integration tests"
 
 ## Logging (Lambdas)
 
