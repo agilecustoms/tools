@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.3](https://github.com/agilecustoms/tools/compare/v1.1.2...v1.1.3) (2026-11-13)
+
+### Documentation
+
+* local run via IDE run configurations (.run/) and CLI make targets, run-local-deps, compose healthcheck, run_local file names ([808146c](https://github.com/agilecustoms/tools/commit/808146c657d19db49023d747e7c4b086b68af581))
+
+
 ## [1.1.2](https://github.com/agilecustoms/tools/compare/v1.1.1...v1.1.2) (2026-11-13)
 
 ### Documentation
