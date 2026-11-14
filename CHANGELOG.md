@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.6](https://github.com/agilecustoms/tools/compare/v1.1.5...v1.1.6) (2026-11-14)
+
+### Documentation
+
+* README section Run locally always present, Integration tests only if any; drop run-local-mock example ([2b16dc8](https://github.com/agilecustoms/tools/commit/2b16dc87afd3ea3c114a0863d473fc1b944ed31a))
+
+
 ## [1.1.5](https://github.com/agilecustoms/tools/compare/v1.1.4...v1.1.5) (2026-11-14)
 
 ### Documentation
