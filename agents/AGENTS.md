@@ -117,8 +117,8 @@ Local dependencies are started explicitly, then the app, as two processes:
 - the app checks them at start (`local` runtime) and stops at once with a hint if they are not running or not ready
 
 Make targets:
-- `run-local-deps` - local dependencies in foreground: `trap 'docker compose down' EXIT HUP INT TERM; docker compose up`
-  (trap also stops them when the terminal is closed)
+- `run-local-deps` - local dependencies in foreground: `trap 'docker compose down -v' EXIT HUP INT TERM; docker compose up`
+  (trap also stops them when the terminal is closed, `-v` removes their anonymous volumes: state isn't kept between starts)
 - `run-local` - local server in `local` runtime
 - `run-local-watch` - same with reload on code change (where the stack supports it)
 - `run-localaws` - local server in `localaws` runtime
@@ -132,7 +132,7 @@ Local dependencies are in `docker-compose.yml` in repo root:
   the app checks the same readiness at start, it takes the endpoint from its local config
 
 README sections, same names in all services:
-"Profiles", "Run locally (local)", "Run locally with AWS resources (localaws)", "Integration tests"
+"Profiles", "Run locally", "Run locally with AWS resources (localaws)", "Integration tests"
 
 ## Logging (Lambdas)
 
