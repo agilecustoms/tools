@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.5](https://github.com/agilecustoms/tools/compare/v1.1.4...v1.1.5) (2026-11-14)
+
+### Documentation
+
+* run-local-deps removes anonymous volumes (down -v), README section Run locally ([54c1da8](https://github.com/agilecustoms/tools/commit/54c1da883ddb985335457478fd36412470330dcf))
+
+
 ## [1.1.4](https://github.com/agilecustoms/tools/compare/v1.1.3...v1.1.4) (2026-11-13)
 
 ### Documentation
