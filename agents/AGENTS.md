@@ -124,7 +124,7 @@ Make targets:
 - `run-localaws` - local server in `localaws` runtime
 - `run-invoke EVENT=events/<name>.json` - invoke in `local` runtime, sample events are in `events/`
 - `app3-generate-openapi` - spec in `dist/`
-- extra variants are allowed, they keep the runtime name in target name (ex: tt-web `run-local-mock` - UI w/o backend)
+- extra variants are allowed, they keep the runtime name in target name
 
 Local dependencies are in `docker-compose.yml` in repo root:
 - no restart policy, no `container_name` (compose names containers by project, ex: `env-api-localstack-1`)
@@ -132,7 +132,8 @@ Local dependencies are in `docker-compose.yml` in repo root:
   the app checks the same readiness at start, it takes the endpoint from its local config
 
 README sections, same names in all services:
-"Profiles", "Run locally", "Run locally with AWS resources (localaws)", "Integration tests"
+"Profiles", "Run locally", "Run locally with AWS resources (localaws)", "Integration tests" (only if the service has them).
+"Run locally" is always there: if there is no `local` runtime, it says why (ex: no local substitute for Cognito)
 
 ## Logging (Lambdas)
 
