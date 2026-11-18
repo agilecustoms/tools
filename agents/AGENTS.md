@@ -11,9 +11,7 @@ with the command it prints (`git pull` and `install.sh`)
 
 There are few types of repos:
 - Project repos: `tt-*`, `ev-*`, `env-*` (+`envctl`) repos constitute respective projects `tt`, `ev`, `env`.
-  Most of these repos are microservices released using semantic versioning.
   Each project has `-gitops` repo that stores a manifest with versions of all components of this project.
-  `-gitops` has no binary releases, it is the only project repo that has a deployment pipeline.
 - `gha-*` - private corporate GitHub Actions
 - `terraform-*` - Open source Terraform modules 
 - private libraries used by other projects:
@@ -21,37 +19,16 @@ There are few types of repos:
   - `java-parent` (Maven project used as parent for all java projects)
 - Open source GitHub Actions:
   - `setup-maven-codeartifact`
-  - `release` and its two dependencies `release-gen`, `publish-s3` constitute a `release` GitHub Action used by all other repos.
-    (private repos use corporate-specific wrapper `gha-release`)  
+  - `release` and its two dependencies `release-gen`, `publish-s3` (used only here) constitute a `release` GitHub Action.
 - `infrastructure-core` - core infrastructure: aws organization (accounts), SSO, CodeArtifact, IAM, permission boundaries,
   GitHub repos and groups, user accounts
 
-## Makefile
-
-Targets follow one naming scheme across repos. In `appN-*` the number is the order you need them in
-
-| Target        | What it does                                                                           |
-|---------------|----------------------------------------------------------------------------------------|
-| `_aws-login`  | `aws sso login` (interactive)                                                          |
-| `app0-*`      | install / update dependencies; the only stage that fetches the CodeArtifact token      |
-| `app1-*`      | lint, format, type check                                                               |
-| `app2-*`      | tests (unit, integration)                                                              |
-| `app3-*`      | build, package, generate OpenAPI spec                                                  |
-| `run-*`       | run the app locally: `run-local`, `run-localaws`, `run-invoke` (see Runtimes below)    |
-| `hot-*`       | hit real AWS: hot redeploy, invoke deployed Lambda, need confirmation to run           |
-| `x-*`         | various helpers, only human can run                                                    |
-| `terraform-*` | need confirmation when run deploy or destroy                                           |
-| `debug-*`     | debug some complex workflows, only human can run                                       |
-
-- `app1-*` - `app3-*` represent standard stages of CI pipeline: lint, test, build/package. Numbers represent the order.
-  Intended to be the same for local and CI. Few exceptions say why: `app1-lint-fix: # not called by CI (local only...)`
-- `*-gitops` and `infrastructure-core` have their own schemes (`env0-status`, `gh-1-plan`...): don't run them, ask the user
-
-Before finishing a change run the repo's lint and test targets (`app1-*`, `app2-*`).
-Don't run anything that deploys, invokes or deletes in AWS, even if `ENV` looks like a non-prod default: ask the user.
-
 ## GitHub workflows
 
+Most repos are software products with semantic versioning and CI pipeline that ends with release step.
+`*-gitops` repos orchestrate microservices. This is the only type of repo that has a deployment pipeline
+
+All non-gitops repos share similar workflow structure:
 - `build.yml` (name `Build`) runs on push in any branch, its `Release` job runs only on `main`
 - repos with multiple release workflows have dedicated workflow files `release.yml`, `release-dev.yml` which call `build.yml` internally
 - Jobs that must pass before PR merge (`Build`, `Test`, etc) are declared in `infrastructure-core/github/repo-*.tf`
@@ -61,28 +38,34 @@ Don't run anything that deploys, invokes or deletes in AWS, even if `ENV` looks 
   - `Validate` - lint / static checks for infra-only repos
   - `Validate-infra` - terraform validation in repos with both code and infrastructure (microservices)
   - `Test` - integration tests
-  - `Release` - release job, runs mostly on `main` branch
+  - `Release` - runs mostly on `main` branch and calls `release` GA Action for public repos
+    or `gha-release` - corporate-specific wrapper for private repos.
+    `release` action uses conventional commit messages, see [Git / Release](#git--release) section below
 
-Private dependencies (Maven, npm) come from AWS CodeArtifact. Locally the token comes from `~/agilecustoms/github/tools/build/tools.sh`
-(`ac_build_token`), which needs an AWS SSO session. If you can't get it, say so - don't skip the step silently.
+Makefiles are used as a contract between local and CI runs, see [Makefile](#makefile) section below.
+Makefile has targets `app1-lint`, `app2-test`, `app3-build/package` (numbers just give the order).
+CI pipeline calls these targets in corresponding steps,
+so we can modify/debug CI steps locally with high confidence that it will behave the same in CI
 
 ## Git / Release
 
 - Commit prefixes: `feat:`, `fix:`, `misc:`, `docs:`, `build:`. The release version is derived from them.
-- public repos released by `agilecustoms/release`, private repos released by its wrapper `agilecustoms/gha-release`:
-  direct push to `main` or merge to `main` releases automatically. CI makes the `Release version ... [skip ci]` commits
+- Direct push to `main` or merge to `main` releases automatically. CI makes the `Release version ... [skip ci]` commits
   and updates `CHANGELOG.md` and versions - never do that by hand.
 - Git hooks live in `.githooks/` (where present), `.githooks/pre-commit` runs the repo's linters; don't bypass it with `--no-verify`.
   Git uses them via `core.hooksPath = .githooks`, set once per machine for all repos under `~/agilecustoms/github/`
   (`includeIf` in `~/.gitconfig`, see Confluence "Git/GitHub"). If `git config core.hooksPath` in a repo is not `.githooks`,
   tell the user, don't set it per repo
-- by default, you make all changes in working copy of `main` branch, `git add` any new files, but do not commit them.
+- by default, AI Agent makes all changes in working copy of `main` branch, `git add` any new files, but do not commit them.
   Human review changes and gives commands `commit` and `push`
 
 ## Runtimes and entry points
 
-Services (Lambdas, web app) share one config concept, whatever the language: profiles in this order (later wins)
-1. default – always loaded
+All services (whatever the language) use concept of profiles. Often profile is just a set of properties in file
+(`.yaml`, `.toml`, `.env`, etc) but can also be some code that is only activated for a specific profile.
+Profiles are passed in the application via environment variable. Property files are merged, later wins.
+Profile types:
+1. default – always loaded (hence not passed via env variable)
 2. environment type - `dev`, `test`, `prod` (Terraform `var.env_type`)
 3. runtime – see the table
 4. runtime-environment - `{runtime}-{environment}`, ex: `aws-prod`, for overrides
@@ -96,44 +79,79 @@ Services (Lambdas, web app) share one config concept, whatever the language: pro
 | `it`       | integration tests                                                                          | `it`                        |
 
 Entry points are siblings over the same dependency injection container (application logic is defined once):
-Lambda handler (`aws`), local server (`local`, `localaws`), invoke (`local`), OpenAPI generator, integration tests.
+Lambda handler (`aws`), local server (`local`, `localaws`), invoke (`local`, `localaws`), OpenAPI generator, integration tests.
 Invoke runs the Lambda handler once with an event from a file (SQS message, API Gateway request),
 prints JSON logs and the response, exits with exit code: debug a feature or replay an event w/o deploying.
-It refuses non-local config.
+
 File names per language:
 - Python `lambda_handler.py`, `local/run_local.py`, `local/invoke.py`, `openapi/`
 - TypeScript `lambda_handler.ts`, `run_local.ts`, `invoke.ts`, `openapi.ts`
 - Java `LambdaHandler`, `Application` (local), `Invoke`
 
-Local run has two equal paths, one setup (profiles, env vars, dependencies) shared by both:
-- IDE (developer: debugger from the first line, env vars, hot reload):
-  run configurations "local-deps", "local", "localaws" in `.run/` (JetBrains "store as project file", in git; `.idea/` stays ignored).
-  Config names w/o spaces
-- CLI (AI agent, FE developer who just needs BE, newcomer): `make run-local`, `make run-localaws`.
-  An IDE configuration and its make target must set the same profiles and env vars
-
-Local dependencies are started explicitly, then the app, as two processes:
-- dependencies stop with their process (stop, closing the IDE or terminal); the app restarts don't affect them
-- the app checks them at start (`local` runtime) and stops at once with a hint if they are not running or not ready
+## Makefile
 
 Make targets:
-- `run-local-deps` - local dependencies in foreground: `trap 'docker compose down -v' EXIT HUP INT TERM; docker compose up`
-  (trap also stops them when the terminal is closed, `-v` removes their anonymous volumes: state isn't kept between starts)
-- `run-local` - local server in `local` runtime
-- `run-local-watch` - same with reload on code change (where the stack supports it)
-- `run-localaws` - local server in `localaws` runtime
-- `run-invoke EVENT=events/<name>.json` - invoke in `local` runtime, sample events are in `events/`
-- `app3-generate-openapi` - spec in `dist/`
+- `_aws-login` - `aws sso login` (interactive)
+- `app0-*` - install / update dependencies locally (the only stage that fetches the CodeArtifact token). 
+  Not used in CI bcz CI uses specialized OIDC access and caching
+- standard CI steps:
+  - `app1-*` - lint, format, type check
+  - `app2-*` - unit tests
+  - `app3-*` - build/package, generate OpenAPI spec
+    Intended to be the same for local and CI. Few exceptions say why: `app1-lint-fix: # not called by CI (local only...)`
+- run application locally:
+  - `run-local-deps` - local dependencies in foreground: `trap 'docker compose down -v' EXIT HUP INT TERM; docker compose up`
+    (trap also stops them when the terminal is closed, `-v` removes their anonymous volumes: state isn't kept between starts)
+  - `run-local` - local server in `local` runtime
+  - `run-local-watch` - same with reload on code change (where the stack supports it)
+  - `run-localaws` - local server in `localaws` runtime
+- AI optimized entry points to run/test application with certain payload, capture response (plus logs) and shut down:
+  - `invoke-local` - invoke in `local` runtime with `EVENT=events/<name>.json`, sample events are in `events/`.
+    Always safe (never touches AWS)
+  - `invoke-localaws` - invoke in `localaws` runtime: local code, real AWS resources of an env, needs confirmation
+  - `invoke-aws` - deployed Lambda, needs confirmation. A repo adds `invoke-localaws` / `invoke-aws` only where useful
+- `hot-*` - hot redeploy to AWS, needs confirmation. A repo adds `hot-*` only where useful
+- `debug-*` - debug some complex workflows, only human can run
+- `terraform-*` - deploy / destroy infrastructure, needs confirmation. A repo adds `terraform-*` only where useful
+- `x-*` - various helpers, only human can run
 - extra variants are allowed, they keep the runtime name in target name
+- `*-gitops` and `infrastructure-core` have their own schemes (`env0-status`, `gh-1-plan`...): don't run them, ask the user
+
+Before finishing a change, run the targets `app1-*` and `app2-*` (and `app3-*` if dependencies changed).
+
+Don't run anything that deploys, invokes or deletes in AWS, even if `ENV` looks like a non-prod default: ask the user
+
+## Package management
+
+Private dependencies (Maven, npm) come from AWS CodeArtifact
+
+Locally CodeArtifact token comes from `~/agilecustoms/github/tools/build/tools.sh` (`ac_build_token`).
+To generate a token an active AWS SSO session is needed. If you need a fresh artifact and the session is expired,
+you must notify user and ask to run `aws sso login` to refresh the session
+
+## Readme
+
+README sections, same names in all services:
+"Profiles", "Run locally", "Run locally with AWS resources (localaws)", "Integration tests" (only if the service has them).
+"Run locally" is always there: if there is no `local` runtime, it says why (ex: no local substitute for Cognito)
+
+## Local run
+
+Local run can be performed from IDE or CLI. Both share same setup (profiles, env vars, dependencies):
+- IDE (developer: debugger from the first line, env vars, hot reload):
+  run configurations "local-deps", "local", "localaws", "invoke-local", "invoke-localaws" in `.run/`
+  (JetBrains "store as project file", in git; `.idea/` stays ignored)
+- CLI (FE developer who just needs BE, BE developer who uses different IDE): `make run-local`, `make run-localaws`.
+An IDE configuration and its make target must set the same profiles and env vars
+
+Local dependencies are started explicitly, then the app, as two processes. `run-local-deps` always run in foreground:
+once you stop the process, the dependencies stop too. So you never get unused containers running in background.
+The app checks that dependencies are ready and stops at once with a hint if they are not running or not ready
 
 Local dependencies are in `docker-compose.yml` in repo root:
 - no restart policy, no `container_name` (compose names containers by project, ex: `env-api-localstack-1`)
 - a healthcheck tells when they are ready (ex: LocalStack init scripts are done),
   the app checks the same readiness at start, it takes the endpoint from its local config
-
-README sections, same names in all services:
-"Profiles", "Run locally", "Run locally with AWS resources (localaws)", "Integration tests" (only if the service has them).
-"Run locally" is always there: if there is no `local` runtime, it says why (ex: no local substitute for Cognito)
 
 ## Logging (Lambdas)
 
