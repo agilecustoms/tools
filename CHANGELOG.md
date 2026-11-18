@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.1.7](https://github.com/agilecustoms/tools/compare/v1.1.6...v1.1.7) (2026-11-18)
+
+### Documentation
+
+* AGENTS.md review fixes: app2 includes integration tests, invoke targets share EVENT, profiles passing, wording ([da89ee2](https://github.com/agilecustoms/tools/commit/da89ee2eeb1a1728a8cad187d352bcfb1e9d3565))
+* AI agent specific rules in one place: targets an agent runs freely (app*, run-local*, invoke-local), anything else ask first ([3c09bb7](https://github.com/agilecustoms/tools/commit/3c09bb7089eba3ebb8966869afff33517c0a276b))
+
+
 ## [1.1.6](https://github.com/agilecustoms/tools/compare/v1.1.5...v1.1.6) (2026-11-14)
 
 ### Documentation
