@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.8](https://github.com/agilecustoms/tools/compare/v1.1.7...v1.1.8) (2026-11-18)
+
+### Documentation
+
+* invoke-local is the only standard invoke target, other variants are repo-specific ([172152b](https://github.com/agilecustoms/tools/commit/172152bae86315f60dbd8d99f880c53b29d2e184))
+
+
 ## [1.1.7](https://github.com/agilecustoms/tools/compare/v1.1.6...v1.1.7) (2026-11-18)
 
 ### Documentation
