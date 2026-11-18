@@ -92,7 +92,7 @@ File names per language:
 ## Makefile
 
 Make targets:
-- `_aws-login` - `aws sso login` (interactive)
+- `_aws-login` - `aws sso login`
 - `app0-*` - install / update dependencies locally (the only stage that fetches the CodeArtifact token).
   Not used in CI because CI uses specialized OIDC access and caching
 - standard CI steps, intended to be the same for local and CI.
@@ -107,21 +107,21 @@ Make targets:
   - `run-local-watch` - same with reload on code change (where the stack supports it)
   - `run-localaws` - local server in `localaws` runtime
 - AI optimized entry points to run/test application with certain payload, capture response (plus logs) and shut down:
-  - `invoke-local` - invoke in `local` runtime with `EVENT=events/<name>.json`, sample events are in `events/`.
-    Always safe (never touches AWS)
-  - `invoke-localaws` - same `EVENT` in `localaws` runtime: local code, real AWS resources of an env, needs confirmation
-  - `invoke-aws` - same `EVENT` to the deployed Lambda (`aws lambda invoke`), needs confirmation.
+  - `invoke-local` - invoke in `local` runtime with `EVENT=events/<name>.json`, sample events are in `events/`
+  - `invoke-localaws` - same `EVENT` in `localaws` runtime: local code, real AWS resources of an env
+  - `invoke-aws` - same `EVENT` to the deployed Lambda (`aws lambda invoke`).
     A repo adds `invoke-localaws` / `invoke-aws` only where useful
-- `hot-*` - hot redeploy to AWS, needs confirmation. A repo adds `hot-*` only where useful
-- `debug-*` - debug some complex workflows, only human can run
-- `terraform-*` - deploy / destroy infrastructure, needs confirmation. A repo adds `terraform-*` only where useful
-- `x-*` - various helpers, only human can run
+- `hot-*` - hot redeploy to AWS. A repo adds `hot-*` only where useful
+- `debug-*` - debug some complex workflows
+- `terraform-*` - deploy / destroy infrastructure. A repo adds `terraform-*` only where useful
+- `x-*` - various helpers
 - extra variants are allowed, they keep the runtime name in target name
 - `*-gitops` and `infrastructure-core` have their own schemes (`env0-status`, `gh-1-plan`...): don't run them, ask the user
 
-Before finishing a change, run the targets `app1-*` and `app2-*` (and `app3-*` if dependencies changed).
-
-Don't run anything that deploys, invokes or deletes in AWS, even if `ENV` looks like a non-prod default: ask the user
+AI agent specific:
+- AI agent runs freely: `app*`, `run-local`, `run-local-deps`, `run-local-watch`, `invoke-local`; anything else: ask first
+- Before finishing a change, run the targets `app1-*` and `app2-*` (and `app3-*` if dependencies changed)
+- Don't run anything that deploys, invokes or deletes in AWS, even if `ENV` looks like a non-prod default: ask the user
 
 ## Package management
 
