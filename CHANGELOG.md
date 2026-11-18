@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.9](https://github.com/agilecustoms/tools/compare/v1.1.8...v1.1.9) (2026-11-18)
+
+### Documentation
+
+* invoke details: same handler over local config, localaws variant, response on stdout ([6b2ee7e](https://github.com/agilecustoms/tools/commit/6b2ee7e7d1ded671c289ec8b06cf88afb943ba59))
+
+
 ## [1.1.8](https://github.com/agilecustoms/tools/compare/v1.1.7...v1.1.8) (2026-11-18)
 
 ### Documentation
