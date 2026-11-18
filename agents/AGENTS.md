@@ -80,7 +80,7 @@ Profile types:
 | `it`       | integration tests                                                                          | `it`                        |
 
 Entry points are siblings over the same dependency injection container (application logic is defined once):
-Lambda handler (`aws`), local server (`local`, `localaws`), invoke (`local`, `localaws`), OpenAPI generator, integration tests.
+Lambda handler (`aws`), local server (`local`, `localaws`), invoke (`local`), OpenAPI generator, integration tests.
 Invoke runs the Lambda handler once with an event from a file (SQS message, API Gateway request),
 prints JSON logs and the response, exits with exit code: debug a feature or replay an event w/o deploying
 
@@ -106,11 +106,8 @@ Make targets:
   - `run-local` - local server in `local` runtime
   - `run-local-watch` - same with reload on code change (where the stack supports it)
   - `run-localaws` - local server in `localaws` runtime
-- AI optimized entry points to run/test application with certain payload, capture response (plus logs) and shut down:
-  - `invoke-local` - invoke in `local` runtime with `EVENT=events/<name>.json`, sample events are in `events/`
-  - `invoke-localaws` - same `EVENT` in `localaws` runtime: local code, real AWS resources of an env
-  - `invoke-aws` - same `EVENT` to the deployed Lambda (`aws lambda invoke`).
-    A repo adds `invoke-localaws` / `invoke-aws` only where useful
+- `invoke-local` - AI optimized entry point: run the application in `local` runtime with `EVENT=events/<name>.json`,
+  capture response (plus logs) and shut down. Sample events are in `events/`
 - `hot-*` - hot redeploy to AWS. A repo adds `hot-*` only where useful
 - `debug-*` - debug some complex workflows
 - `terraform-*` - deploy / destroy infrastructure. A repo adds `terraform-*` only where useful
@@ -141,7 +138,7 @@ README sections, same names in all services:
 
 Local run can be performed from IDE or CLI. Both share same setup (profiles, env vars, dependencies):
 - IDE (developer: debugger from the first line, env vars, hot reload):
-  run configurations "local-deps", "local", "localaws", "invoke-local", "invoke-localaws" in `.run/`
+  run configurations "local-deps", "local", "localaws", "invoke-local" in `.run/`
   (JetBrains "store as project file", in git; `.idea/` stays ignored)
 - CLI (FE developer who just needs BE, BE developer who uses different IDE): `make run-local`, `make run-localaws`.
 An IDE configuration and its make target must set the same profiles and env vars
