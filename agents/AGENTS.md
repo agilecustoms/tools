@@ -82,7 +82,11 @@ Profile types:
 Entry points are siblings over the same dependency injection container (application logic is defined once):
 Lambda handler (`aws`), local server (`local`, `localaws`), invoke (`local`), OpenAPI generator, integration tests.
 Invoke runs the Lambda handler once with an event from a file (SQS message, API Gateway request),
-prints JSON logs and the response, exits with exit code: debug a feature or replay an event w/o deploying
+prints JSON logs and the response, exits with exit code: debug a feature or replay an event w/o deploying.
+Invoke details:
+- the same handler code as in AWS over a root module of local config: credentials never come from AWS secrets
+- a service w/o `local` runtime invokes in `localaws` (target `invoke-localaws`, ex: ev-invoice)
+- the response goes to stdout as is, not as a log record; exit code 1 on error or HTTP 5xx
 
 File names per language:
 - Python `lambda_handler.py`, `local/run_local.py`, `local/invoke.py`, `openapi/`
