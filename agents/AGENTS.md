@@ -56,16 +56,17 @@ so we can modify/debug CI steps locally with high confidence that it will behave
   Git uses them via `core.hooksPath = .githooks`, set once per machine for all repos under `~/agilecustoms/github/`
   (`includeIf` in `~/.gitconfig`, see Confluence "Git/GitHub"). If `git config core.hooksPath` in a repo is not `.githooks`,
   tell the user, don't set it per repo
-- by default, AI Agent makes all changes in working copy of `main` branch, `git add` any new files, but do not commit them.
+- by default, AI Agent makes all changes in working copy of `main` branch, `git add`s any new files, but does not commit them.
   Human review changes and gives commands `commit` and `push`
 
 ## Runtimes and entry points
 
 All services (whatever the language) use concept of profiles. Often profile is just a set of properties in file
 (`.yaml`, `.toml`, `.env`, etc) but can also be some code that is only activated for a specific profile.
-Profiles are passed in the application via environment variable. Property files are merged, later wins.
+Active profiles are passed to the application at start, usually via environment variable (`SPRING_PROFILES_ACTIVE`, `APP_PROFILES`).
+Property files are merged, later wins.
 Profile types:
-1. default – always loaded (hence not passed via env variable)
+1. default – always loaded (hence not passed in the list of active profiles)
 2. environment type - `dev`, `test`, `prod` (Terraform `var.env_type`)
 3. runtime – see the table
 4. runtime-environment - `{runtime}-{environment}`, ex: `aws-prod`, for overrides
@@ -81,7 +82,7 @@ Profile types:
 Entry points are siblings over the same dependency injection container (application logic is defined once):
 Lambda handler (`aws`), local server (`local`, `localaws`), invoke (`local`, `localaws`), OpenAPI generator, integration tests.
 Invoke runs the Lambda handler once with an event from a file (SQS message, API Gateway request),
-prints JSON logs and the response, exits with exit code: debug a feature or replay an event w/o deploying.
+prints JSON logs and the response, exits with exit code: debug a feature or replay an event w/o deploying
 
 File names per language:
 - Python `lambda_handler.py`, `local/run_local.py`, `local/invoke.py`, `openapi/`
@@ -92,13 +93,13 @@ File names per language:
 
 Make targets:
 - `_aws-login` - `aws sso login` (interactive)
-- `app0-*` - install / update dependencies locally (the only stage that fetches the CodeArtifact token). 
-  Not used in CI bcz CI uses specialized OIDC access and caching
-- standard CI steps:
+- `app0-*` - install / update dependencies locally (the only stage that fetches the CodeArtifact token).
+  Not used in CI because CI uses specialized OIDC access and caching
+- standard CI steps, intended to be the same for local and CI.
+  Few exceptions say why: `app1-lint-fix: # not called by CI (local only...)`
   - `app1-*` - lint, format, type check
-  - `app2-*` - unit tests
+  - `app2-*` - tests (unit, integration)
   - `app3-*` - build/package, generate OpenAPI spec
-    Intended to be the same for local and CI. Few exceptions say why: `app1-lint-fix: # not called by CI (local only...)`
 - run application locally:
   - `run-local-deps` - local dependencies in foreground: `trap 'docker compose down -v' EXIT HUP INT TERM; docker compose up`
     (trap also stops them when the terminal is closed, `-v` removes their anonymous volumes: state isn't kept between starts)
@@ -108,8 +109,9 @@ Make targets:
 - AI optimized entry points to run/test application with certain payload, capture response (plus logs) and shut down:
   - `invoke-local` - invoke in `local` runtime with `EVENT=events/<name>.json`, sample events are in `events/`.
     Always safe (never touches AWS)
-  - `invoke-localaws` - invoke in `localaws` runtime: local code, real AWS resources of an env, needs confirmation
-  - `invoke-aws` - deployed Lambda, needs confirmation. A repo adds `invoke-localaws` / `invoke-aws` only where useful
+  - `invoke-localaws` - same `EVENT` in `localaws` runtime: local code, real AWS resources of an env, needs confirmation
+  - `invoke-aws` - same `EVENT` to the deployed Lambda (`aws lambda invoke`), needs confirmation.
+    A repo adds `invoke-localaws` / `invoke-aws` only where useful
 - `hot-*` - hot redeploy to AWS, needs confirmation. A repo adds `hot-*` only where useful
 - `debug-*` - debug some complex workflows, only human can run
 - `terraform-*` - deploy / destroy infrastructure, needs confirmation. A repo adds `terraform-*` only where useful
@@ -144,7 +146,7 @@ Local run can be performed from IDE or CLI. Both share same setup (profiles, env
 - CLI (FE developer who just needs BE, BE developer who uses different IDE): `make run-local`, `make run-localaws`.
 An IDE configuration and its make target must set the same profiles and env vars
 
-Local dependencies are started explicitly, then the app, as two processes. `run-local-deps` always run in foreground:
+Local dependencies are started explicitly, then the app, as two processes. `run-local-deps` always runs in foreground:
 once you stop the process, the dependencies stop too. So you never get unused containers running in background.
 The app checks that dependencies are ready and stops at once with a hint if they are not running or not ready
 
