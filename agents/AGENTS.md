@@ -43,8 +43,7 @@ All non-gitops repos share similar workflow structure:
     `release` action uses conventional commit messages, see [Git / Release](#git--release) section below
 
 Makefiles are used as a contract between local and CI runs, see [Makefile](#makefile) section below.
-Makefile has targets `app1-lint`, `app2-test`, `app3-build/package` (numbers just give the order).
-CI pipeline calls these targets in corresponding steps,
+CI calls `lint*` targets, then `test*` targets, then `build`/`openapi`, each target in its own step,
 so we can modify/debug CI steps locally with high confidence that it will behave the same in CI
 
 ## Git / Release
@@ -52,7 +51,9 @@ so we can modify/debug CI steps locally with high confidence that it will behave
 - Commit prefixes: `feat:`, `fix:`, `misc:`, `docs:`, `build:`. The release version is derived from them.
 - Merge to `main` (or direct push) releases automatically. CI makes the `Release version ... [skip ci]` commits
   and updates `CHANGELOG.md` and versions - never do that by hand.
-- Git hooks live in `.githooks/` (where present), `.githooks/pre-commit` runs the repo's linters; don't bypass it with `--no-verify`.
+- Git hooks live in `.githooks/`, `.githooks/pre-commit` runs all `lint*` targets of the repo: `#!/bin/sh` + `exec make lint`
+  (or `exec make lint-app lint-tf` if there are several). Lint only, not tests: it checks the tree being committed,
+  incl. edits made after the agent's checks; don't bypass it with `--no-verify`.
   Git uses them via `core.hooksPath = .githooks`, set once per machine for all repos under `~/agilecustoms/github/`
   (`includeIf` in `~/.gitconfig`, see Confluence "Git/GitHub"). If `git config core.hooksPath` in a repo is not `.githooks`,
   tell the user, don't set it per repo
@@ -97,13 +98,15 @@ File names per language:
 
 Make targets:
 - `_aws-login` - `aws sso login`
-- `app0-*` - install / update dependencies locally (the only stage that fetches the CodeArtifact token).
-  Not used in CI because CI uses specialized OIDC access and caching
-- standard CI steps, intended to be the same for local and CI.
-  Few exceptions say why: `app1-lint-fix: # not called by CI (local only...)`
-  - `app1-*` - lint, format, type check
-  - `app2-*` - tests (unit, integration)
-  - `app3-*` - build/package, generate OpenAPI spec
+- `deps-install`, `deps-update` - install / update dependencies locally (the only targets that fetch the CodeArtifact token),
+  in Terraform repos `deps-install` is `terraform init`. Not used in CI because CI uses specialized OIDC access and caching
+- `lint*` - static checks that need no running services and are fast (they run on every commit): `lint` if the repo has one,
+  otherwise one per part: `lint-app` (code: lint, type check), `lint-tf` (`terraform fmt -check`).
+  If findings can be fixed automatically, the exact fix command is in a comment above the target (ex: `# fix: npm run lint -- --fix`).
+  In microservices `lint-tf` runs in CI in the `Validate-infra` job (`gha-validate-terraform`), other `lint*` in the `Build` job
+- `test*` - tests: `test` if the repo has one kind, otherwise one per kind: `test-app` (unit), `test-it` (integration),
+  `test-tf` (`terraform test`), `test-tf-validate` (`terraform validate`, only where init needs no credentials)
+- `build` - build and package the artifact, `openapi` - OpenAPI spec (after `build` where the generator runs built code)
 - run application locally:
   - `run-local-deps` - local dependencies in foreground: `trap 'docker compose down -v' EXIT HUP INT TERM; docker compose up`
     (trap also stops them when the terminal is closed, `-v` removes their anonymous volumes: state isn't kept between starts)
@@ -120,8 +123,9 @@ Make targets:
 - `*-gitops` and `infrastructure-core` have their own schemes (`env0-status`, `gh-1-plan`...): don't run them, ask the user
 
 AI agent specific:
-- AI agent runs freely: `app*`, `run-local`, `run-local-deps`, `run-local-watch`, `invoke-local`; anything else: ask first
-- Before finishing a change, run the targets `app1-*` and `app2-*` (and `app3-*` if dependencies changed)
+- AI agent runs freely: `lint*`, `test*`, `build`, `openapi`, `deps-*`, `run-local`, `run-local-deps`, `run-local-watch`,
+  `invoke-local`; anything else: ask first
+- Before finishing a change, run all `lint*` and `test*` targets (plus `build` if dependencies changed)
 - Don't run anything that deploys, invokes or deletes in AWS, even if `ENV` looks like a non-prod default: ask the user
 
 ## Package management

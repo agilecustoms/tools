@@ -15,8 +15,8 @@ jobs:
           persist-credentials: false
 
       # shellcheck is preinstalled in GH Ubuntu image
-      - name: Shellcheck
-        run: make app1-lint
+      - name: Lint
+        run: make lint
 
   Release:
     if: github.ref == 'refs/heads/main'

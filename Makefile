@@ -1,3 +1,3 @@
 # shellcheck is preinstalled in GH Ubuntu image, locally: brew install shellcheck
-app1-lint:
+lint:
 	@shellcheck *.sh scripts/*.sh build/*.sh
