@@ -99,7 +99,8 @@ File names per language:
 Make targets:
 - `_aws-login` - `aws sso login`
 - `deps-install`, `deps-update` - install / update dependencies locally (the only targets that fetch the CodeArtifact token),
-  in Terraform repos `deps-install` is `terraform init`. Not used in CI because CI uses specialized OIDC access and caching
+  in Terraform repos `deps-install` is `terraform init`. Not used in CI because CI uses specialized OIDC access and caching,
+  except Terraform-only repos, where it is a plain `terraform init`
 - `lint*` - static checks that need no running services and are fast (they run on every commit): `lint` if the repo has one,
   otherwise one per part: `lint-app` (code: lint, type check), `lint-tf` (`terraform fmt -check`).
   If findings can be fixed automatically, the exact fix command is in a comment above the target (ex: `# fix: npm run lint -- --fix`).
