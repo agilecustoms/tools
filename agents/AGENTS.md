@@ -108,6 +108,7 @@ Make targets:
 - `test*` - tests: `test` if the repo has one kind, otherwise one per kind: `test-app` (unit), `test-it` (integration),
   `test-tf` (`terraform test`), `test-tf-validate` (`terraform validate`, only where init needs no credentials)
 - `build` - build and package the artifact, `openapi` - OpenAPI spec (after `build` where the generator runs built code)
+- a target named like a directory of the repo (ex: `test` with a `test/` dir) is declared `.PHONY`
 - run application locally:
   - `run-local-deps` - local dependencies in foreground: `trap 'docker compose down -v' EXIT HUP INT TERM; docker compose up`
     (trap also stops them when the terminal is closed, `-v` removes their anonymous volumes: state isn't kept between starts)
