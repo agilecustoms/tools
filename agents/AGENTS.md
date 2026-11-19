@@ -50,7 +50,7 @@ so we can modify/debug CI steps locally with high confidence that it will behave
 ## Git / Release
 
 - Commit prefixes: `feat:`, `fix:`, `misc:`, `docs:`, `build:`. The release version is derived from them.
-- Direct push to `main` or merge to `main` releases automatically. CI makes the `Release version ... [skip ci]` commits
+- Merge to `main` (or direct push) releases automatically. CI makes the `Release version ... [skip ci]` commits
   and updates `CHANGELOG.md` and versions - never do that by hand.
 - Git hooks live in `.githooks/` (where present), `.githooks/pre-commit` runs the repo's linters; don't bypass it with `--no-verify`.
   Git uses them via `core.hooksPath = .githooks`, set once per machine for all repos under `~/agilecustoms/github/`
